@@ -1,0 +1,469 @@
+// =============================================================================
+// BallKnower — Full platform data model.
+//
+// NOTE: This schema is authored in Phase 1 to lock the shape of the whole
+// platform, but Phase 1 runs on mock data and does NOT connect to a database.
+// It compiles and `prisma format`/`prisma generate` work, but no migrations
+// are applied until Phase 2. See docs/PHASE2_PLAN.md.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Enums
+// ----------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  EDITOR
+  APPROVER
+  VIEWER
+}
+
+enum SourceType {
+  HIGHLIGHT_FEED
+  TALKING_HEAD_SHOW
+  YOUTUBE_CHANNEL
+  RSS_FEED
+  PARTNER_FEED
+  UPLOADED_VIDEO
+  MANUAL_URL
+  API_SOURCE
+  CLOUD_STORAGE
+}
+
+enum ImportMethod {
+  MANUAL_UPLOAD
+  MANUAL_URL
+  RSS
+  API
+  CLOUD_FOLDER
+  YOUTUBE
+}
+
+enum Platform {
+  TIKTOK
+  INSTAGRAM_REELS
+  YOUTUBE_SHORTS
+  FACEBOOK_REELS
+  X
+}
+
+enum VideoStatus {
+  IMPORTED
+  TRANSCRIBING
+  TRANSCRIBED
+  ANALYZED
+  ARCHIVED
+}
+
+enum ClipCategory {
+  TOP_PLAY
+  DEBATE
+  HOT_TAKE
+  FUNNY
+  BREAKING_NEWS
+  INTERVIEW_QUOTE
+  VIRAL
+  CONTROVERSY
+  ANALYSIS
+  OTHER
+}
+
+enum PackageFormat {
+  TOP_7_PLAYS
+  BEST_TAKES
+  DAILY_RUNDOWN
+  BREAKING_NEWS
+  CUSTOM
+}
+
+enum PackageStatus {
+  AI_GENERATED
+  IN_REVIEW
+  NEEDS_CHANGES
+  READY_FOR_FILMING
+  READY_FOR_RENDER
+  DRAFT_RENDERED
+  APPROVED_FOR_POSTING
+  POSTED
+}
+
+enum ClipApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REPLACED
+}
+
+enum FilmingPromptStatus {
+  NEEDED
+  FILMED
+  UPLOADED
+  APPROVED
+}
+
+enum RenderStatus {
+  QUEUED
+  RENDERING
+  READY
+  FAILED
+}
+
+enum PostStatus {
+  SCHEDULED
+  POSTING
+  POSTED
+  FAILED
+  CANCELLED
+}
+
+// ----------------------------------------------------------------------------
+// Users & roles
+// ----------------------------------------------------------------------------
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      Role     @default(VIEWER)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  activityLogs ActivityLog[]
+  approvals    Approval[]
+
+  @@index([role])
+}
+
+// ----------------------------------------------------------------------------
+// Sources & their settings
+// ----------------------------------------------------------------------------
+
+model Source {
+  id           String       @id @default(cuid())
+  providerName String
+  showName     String?
+  type         SourceType
+  sportLeague  String?
+  importMethod ImportMethod
+  active       Boolean      @default(true)
+  notes        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  settings SourceSettings?
+  videos   Video[]
+  clips    CandidateClip[]
+
+  @@index([type])
+  @@index([active])
+}
+
+model SourceSettings {
+  id              String     @id @default(cuid())
+  sourceId        String     @unique
+  source          Source     @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  allowedPlatforms Platform[]
+  maxClipSeconds  Int        @default(60)
+  attributionText String?
+  watermarkNotes  String?
+  notes           String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+}
+
+// ----------------------------------------------------------------------------
+// Ingested videos, transcripts & segments
+// ----------------------------------------------------------------------------
+
+model Video {
+  id           String      @id @default(cuid())
+  sourceId     String
+  source       Source      @relation(fields: [sourceId], references: [id])
+  title        String
+  externalUrl  String?
+  thumbnailUrl String?
+  durationSec  Int
+  publishedAt  DateTime?
+  status       VideoStatus @default(IMPORTED)
+  metadata     Json?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  transcript Transcript?
+  clips      CandidateClip[]
+
+  @@index([sourceId])
+  @@index([status])
+}
+
+model Transcript {
+  id        String   @id @default(cuid())
+  videoId   String   @unique
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  language  String   @default("en")
+  provider  String?
+  fullText  String
+  createdAt DateTime @default(now())
+
+  segments TranscriptSegment[]
+}
+
+model TranscriptSegment {
+  id           String     @id @default(cuid())
+  transcriptId String
+  transcript   Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+  startSec     Float
+  endSec       Float
+  text         String
+
+  @@index([transcriptId])
+}
+
+// ----------------------------------------------------------------------------
+// Candidate clips + AI analysis / rankings
+// ----------------------------------------------------------------------------
+
+model CandidateClip {
+  id            String       @id @default(cuid())
+  videoId       String
+  video         Video        @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  sourceId      String
+  source        Source       @relation(fields: [sourceId], references: [id])
+  startSec      Float
+  endSec        Float
+  category      ClipCategory @default(OTHER)
+  transcriptExcerpt String?
+  detectedReason String?
+  createdAt     DateTime     @default(now())
+
+  analyses          AiAnalysis[]
+  packageClips      ShowPackageClip[]
+
+  @@index([videoId])
+  @@index([sourceId])
+  @@index([category])
+}
+
+model AiAnalysis {
+  id              String        @id @default(cuid())
+  candidateClipId String
+  candidateClip   CandidateClip @relation(fields: [candidateClipId], references: [id], onDelete: Cascade)
+  model           String
+  rank            Int?
+  selectionReason String?
+  needsReview     Boolean       @default(false)
+  reviewFlags     String[]
+  rawJson         Json?
+  createdAt       DateTime      @default(now())
+
+  @@index([candidateClipId])
+}
+
+// ----------------------------------------------------------------------------
+// Show packages (the daily deliverable)
+// ----------------------------------------------------------------------------
+
+model ShowPackage {
+  id          String        @id @default(cuid())
+  title       String
+  format      PackageFormat
+  status      PackageStatus @default(AI_GENERATED)
+  showDate    DateTime
+  summary     String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  clips          ShowPackageClip[]
+  filmingPrompts FilmingPrompt[]
+  renderJobs     RenderJob[]
+  approvals      Approval[]
+  socialPosts    SocialPost[]
+
+  @@index([format])
+  @@index([status])
+  @@index([showDate])
+}
+
+model ShowPackageClip {
+  id              String             @id @default(cuid())
+  packageId       String
+  package         ShowPackage        @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  candidateClipId String?
+  candidateClip   CandidateClip?     @relation(fields: [candidateClipId], references: [id])
+  rank            Int
+  approvalStatus  ClipApprovalStatus @default(PENDING)
+  finalStartSec   Float?
+  finalEndSec     Float?
+
+  // AI-authored copy — every field editable by humans.
+  suggestedTitle       String?
+  suggestedCaption     String?
+  suggestedDescription String?
+  suggestedHashtags    String[]
+  suggestedOnScreenText String?
+  suggestedLowerThird  String?
+  suggestedVoiceover   String?
+  suggestedTransition  String?
+  suggestedFilmingPrompt String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([packageId])
+  @@index([rank])
+}
+
+// ----------------------------------------------------------------------------
+// Filming prompts + user-uploaded commentary
+// ----------------------------------------------------------------------------
+
+model FilmingPrompt {
+  id        String              @id @default(cuid())
+  packageId String
+  package   ShowPackage         @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  slot      String // e.g. "hook", "intro", "reaction_play_7", "outro"
+  order     Int
+  prompt    String
+  status    FilmingPromptStatus @default(NEEDED)
+
+  upload CommentaryUpload?
+
+  @@index([packageId])
+}
+
+model CommentaryUpload {
+  id              String        @id @default(cuid())
+  filmingPromptId String        @unique
+  filmingPrompt   FilmingPrompt @relation(fields: [filmingPromptId], references: [id], onDelete: Cascade)
+  fileUrl         String
+  durationSec     Int?
+  createdAt       DateTime      @default(now())
+}
+
+// ----------------------------------------------------------------------------
+// Rendering + versions
+// ----------------------------------------------------------------------------
+
+model RenderJob {
+  id        String       @id @default(cuid())
+  packageId String
+  package   ShowPackage  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  status    RenderStatus @default(QUEUED)
+  error     String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  versions RenderVersion[]
+
+  @@index([packageId])
+  @@index([status])
+}
+
+model RenderVersion {
+  id          String   @id @default(cuid())
+  renderJobId String
+  renderJob   RenderJob @relation(fields: [renderJobId], references: [id], onDelete: Cascade)
+  version     Int
+  fileUrl     String?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@index([renderJobId])
+}
+
+// ----------------------------------------------------------------------------
+// Approvals, social accounts, posting & analytics
+// ----------------------------------------------------------------------------
+
+model Approval {
+  id        String      @id @default(cuid())
+  packageId String
+  package   ShowPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  approved  Boolean
+  note      String?
+  createdAt DateTime    @default(now())
+
+  @@index([packageId])
+}
+
+model SocialAccount {
+  id          String   @id @default(cuid())
+  platform    Platform
+  handle      String
+  displayName String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  posts SocialPost[]
+
+  @@unique([platform, handle])
+}
+
+model SocialPost {
+  id              String        @id @default(cuid())
+  packageId       String
+  package         ShowPackage   @relation(fields: [packageId], references: [id])
+  socialAccountId String
+  socialAccount   SocialAccount @relation(fields: [socialAccountId], references: [id])
+  platform        Platform
+  status          PostStatus    @default(SCHEDULED)
+  scheduledFor    DateTime?
+  postedUrl       String?
+  error           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  analytics Analytics?
+
+  @@index([packageId])
+  @@index([status])
+}
+
+model Analytics {
+  id           String     @id @default(cuid())
+  socialPostId String     @unique
+  socialPost   SocialPost @relation(fields: [socialPostId], references: [id], onDelete: Cascade)
+  views        Int        @default(0)
+  likes        Int        @default(0)
+  comments     Int        @default(0)
+  shares       Int        @default(0)
+  watchTimeSec Int        @default(0)
+  fetchedAt    DateTime   @default(now())
+}
+
+// ----------------------------------------------------------------------------
+// Activity logs + global settings
+// ----------------------------------------------------------------------------
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity])
+  @@index([createdAt])
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
