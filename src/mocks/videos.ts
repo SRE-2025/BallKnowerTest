@@ -33,8 +33,10 @@ export const mockVideos: Video[] = [
   {
     id: "vid_nhl_g4",
     sourceId: "src_highlight_wire",
-    title: "Hurricanes at Golden Knights — Stanley Cup Final Game 4 Recap (June 9, 2026)",
-    externalUrl: "https://www.nhl.com/video/car-at-vgk-recap-6398034433112",
+    title: "Hurricanes at Golden Knights — Stanley Cup Final Game 4 Highlights (6.9.2026)",
+    youTubeId: "lDn94zOtPkQ",
+    externalUrl: "https://www.youtube.com/watch?v=lDn94zOtPkQ",
+    thumbnailUrl: thumb("lDn94zOtPkQ"),
     durationSec: 360,
     publishedAt: "2026-06-10T04:10:00Z",
     status: "ANALYZED",
