@@ -18,6 +18,8 @@ export interface EditSegment {
   attribution?: string;
   // Absolute path to the filmed commentary file for this slot, if uploaded.
   commentaryFile?: string;
+  // Resolved source highlight media for a clip segment (local path or URL).
+  sourceMediaFile?: string;
   durationSec: number;
 }
 
@@ -40,6 +42,7 @@ export interface PlanClip {
   lowerThird?: string;
   caption?: string;
   attribution?: string;
+  mediaFile?: string; // resolved source footage (local path or URL), if available
 }
 
 export interface PlanInput {
@@ -70,6 +73,7 @@ export function buildEditPlan(input: PlanInput): EditPlan {
       kind: "clip",
       label: `Play #${clip.rank}`,
       sourceClipId: clip.candidateClipId,
+      sourceMediaFile: clip.mediaFile,
       startSec: clip.startSec,
       endSec: clip.endSec,
       onScreenText: clip.onScreenText,

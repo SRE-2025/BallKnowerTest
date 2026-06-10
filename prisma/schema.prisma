@@ -193,6 +193,7 @@ model Video {
   externalUrl  String?
   thumbnailUrl String?
   youTubeId    String?     // embeddable source id when available
+  mediaUrl     String?     // resolved downloadable/streamable media (local path or remote URL)
   durationSec  Int
   publishedAt  DateTime?
   status       VideoStatus @default(IMPORTED)

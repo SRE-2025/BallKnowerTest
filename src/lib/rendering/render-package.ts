@@ -1,4 +1,5 @@
 import path from "path";
+import { existsSync } from "fs";
 import { prisma } from "@/lib/db";
 import { buildEditPlan, type PlanClip } from "./edit-plan";
 import { renderEditPlan } from "./ffmpeg-renderer";
@@ -10,7 +11,7 @@ import type { Prisma } from "@prisma/client";
 export async function renderPackage(packageId: string): Promise<{ renderJobId: string; fileUrl: string; rendered: boolean }> {
   const pkg = await prisma.showPackage.findUnique({
     where: { id: packageId },
-    include: { clips: { orderBy: { rank: "asc" } } },
+    include: { clips: { orderBy: { rank: "asc" }, include: { candidateClip: { include: { video: true } } } } },
   });
   if (!pkg) throw new Error(`Package ${packageId} not found`);
 
@@ -24,6 +25,7 @@ export async function renderPackage(packageId: string): Promise<{ renderJobId: s
     onScreenText: c.suggestedOnScreenText ?? undefined,
     lowerThird: c.suggestedLowerThird ?? undefined,
     caption: c.suggestedCaption ?? undefined,
+    mediaFile: resolveClipMedia(c.candidateClip?.video?.mediaUrl ?? null),
   }));
 
   const plan = buildEditPlan({ format: pkg.format, clips: planClips });
@@ -70,4 +72,15 @@ export async function renderPackage(packageId: string): Promise<{ renderJobId: s
     });
     throw e;
   }
+}
+
+// Turns a stored Video.mediaUrl into something ffmpeg can read: a remote URL as
+// is, an existing local file as is, or a public-relative path joined to public/.
+// Returns undefined when no usable media is present (renderer uses a title card).
+function resolveClipMedia(mediaUrl: string | null): string | undefined {
+  if (!mediaUrl) return undefined;
+  if (mediaUrl.startsWith("http://") || mediaUrl.startsWith("https://")) return mediaUrl;
+  if (existsSync(mediaUrl)) return mediaUrl;
+  const publicPath = path.join(process.cwd(), "public", mediaUrl.replace(/^\//, ""));
+  return existsSync(publicPath) ? publicPath : undefined;
 }

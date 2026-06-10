@@ -104,6 +104,7 @@ export interface Video {
   externalUrl?: string;
   thumbnailUrl?: string;
   youTubeId?: string; // when present, the clip is embeddable/playable in-app
+  mediaUrl?: string; // resolved downloadable/streamable media (local path or remote URL)
   durationSec: number;
   publishedAt?: string;
   status: VideoStatus;

@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/status-badge";
+import { PullHighlights } from "@/components/pull-highlights";
 import { formatTimecode } from "@/lib/utils";
 
 export default async function VideosPage() {
@@ -14,8 +15,9 @@ export default async function VideosPage() {
     <div>
       <PageHeader
         title="Videos"
-        description="Imported source videos. In Phase 2 these arrive from real ingestion + transcription."
+        description="Imported source videos. Pull fresh highlights from YouTube or a league channel below."
       />
+      <PullHighlights />
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">

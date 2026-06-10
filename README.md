@@ -87,6 +87,7 @@ Open <http://localhost:3000>.
 | `npm run prisma:generate` | Generate the Prisma client (no DB needed) |
 | `npm run prisma:migrate` | Create/apply DB schema (database mode) |
 | `npm run prisma:seed` | Load mock data into Postgres |
+| `npm run highlights -- <srcId> <league> lastnight [resolve]` | Pull highlights from YouTube / a league channel |
 | `npm run pipeline -- <srcId> '{json}'` | Ingest → transcribe → detect for a source |
 | `npm run generate -- TOP_7_PLAYS` | Run the AI producer to build a package |
 | `npm run render -- <packageId>` | Render a 9:16 draft |
@@ -146,6 +147,25 @@ The full phased plan is in [`docs/`](docs/):
 - [`PHASE1_CHECKLIST.md`](docs/PHASE1_CHECKLIST.md) — what Phase 1 delivers
 - [`PHASE2_PLAN.md`](docs/PHASE2_PLAN.md) — real ingestion + transcription
 - [`SUGGESTED_ISSUES.md`](docs/SUGGESTED_ISSUES.md) — ready-to-create GitHub issues
+
+## 🎞️ Highlight discovery & media API
+
+Find the highlight (YouTube or an official league channel) and pull the video.
+
+- **UI:** Videos page → "Pull last night's highlights" (works without a key via
+  the curated fallback; live with `YOUTUBE_API_KEY`).
+- **HTTP API** (`src/app/api/highlights/route.ts`):
+  - `GET /api/highlights?league=nba&since=lastnight&max=12` — discover
+  - `GET /api/highlights?q=buzzer+beater` — search
+  - `GET /api/highlights?leagues=1` — list supported leagues/channels
+  - `POST /api/highlights` `{ "action": "resolve", "youTubeId": "…" }` — resolve to a media file (rights-gated)
+  - `POST /api/highlights` `{ "action": "ingest", "sourceId": "…", "league": "nhl", "since": "lastnight", "resolve": true }` — discover + persist (database mode)
+
+**Two stages, two boundaries:**
+- **Discovery** uses the official YouTube Data API / league channels — always allowed. Set `YOUTUBE_API_KEY` to go live.
+- **Resolution** (pulling the actual bytes) uses `yt-dlp` and is **off by default**. Set `ALLOW_MEDIA_DOWNLOAD=true` and install `yt-dlp` only for media you have the rights to download/repost. Partner/league direct-MP4 feeds resolve through the URL resolver without downloading.
+
+Once a clip has resolved media, the renderer composites the real footage into the 9:16 draft alongside your commentary.
 
 ## 🌿 Branching
 

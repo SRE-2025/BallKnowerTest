@@ -33,15 +33,18 @@ export async function renderEditPlan(plan: EditPlan, packageId: string): Promise
   const mp4Key = `${packageId}-${Date.now()}.mp4`;
   const out = path.join(RENDERS_DIR, mp4Key);
   const hasCommentary = plan.segments.some((s) => s.commentaryFile);
+  const hasClipMedia = plan.segments.some((s) => s.sourceMediaFile);
   try {
     await runFfmpegComposite(plan, out);
-    return {
-      fileUrl: `/renders/${mp4Key}`,
-      notes: hasCommentary
-        ? "Draft stitched: your commentary edited together with title cards for each play (insert cleared highlight footage where licensed)."
-        : "Draft render produced (title cards only — upload commentary and re-render to stitch it in).",
-      rendered: true,
-    };
+    const notes =
+      hasCommentary && hasClipMedia
+        ? "Draft stitched: your commentary + resolved highlight footage edited together."
+        : hasClipMedia
+        ? "Draft stitched with resolved highlight footage and title cards (upload commentary to add your reactions)."
+        : hasCommentary
+        ? "Draft stitched: your commentary with title cards for each play (resolve highlight media to add footage)."
+        : "Draft render produced (title cards only — upload commentary and/or resolve highlight media, then re-render).";
+    return { fileUrl: `/renders/${mp4Key}`, notes, rendered: true };
   } catch (e) {
     return {
       fileUrl: `/renders/${planKey}`,
@@ -72,9 +75,17 @@ function runFfmpegComposite(plan: EditPlan, outPath: string): Promise<void> {
   let inputIdx = 0;
 
   plan.segments.forEach((seg, i) => {
-    if (seg.commentaryFile) {
-      // Real filmed commentary: scale to fit 9:16, pad, normalize.
-      inputs.push("-i", seg.commentaryFile);
+    const realFile = seg.commentaryFile ?? seg.sourceMediaFile;
+    if (realFile) {
+      // Real video: filmed commentary, or resolved highlight footage for a clip
+      // segment. Scale to fit 9:16, pad, normalize. For clip footage, trim to the
+      // play window when start/end are known.
+      const trim: string[] = [];
+      if (seg.sourceMediaFile && !seg.commentaryFile && seg.startSec != null) {
+        trim.push("-ss", String(seg.startSec));
+        if (seg.endSec != null) trim.push("-t", String(Math.max(1, seg.endSec - seg.startSec)));
+      }
+      inputs.push(...trim, "-i", realFile);
       const vi = inputIdx++;
       vFilters.push(
         `[${vi}:v]scale=${width}:${height}:force_original_aspect_ratio=decrease,` +

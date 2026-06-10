@@ -19,6 +19,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
     "pipeline": "tsx scripts/run-pipeline.ts",
+    "highlights": "tsx scripts/pull-highlights.ts",
     "generate": "tsx scripts/generate-package.ts",
     "render": "tsx scripts/render-package.ts",
     "post": "tsx scripts/post-package.ts",
