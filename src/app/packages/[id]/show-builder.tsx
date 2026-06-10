@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
 import { PageHeader } from "@/components/page-header";
 import { useRole } from "@/lib/role-context";
-import { formatTimeRange, titleize } from "@/lib/utils";
+import { formatTimeRange, titleize, youTubeEmbed } from "@/lib/utils";
 import type {
   ShowPackageClip,
   FilmingPrompt,
@@ -22,6 +22,9 @@ export interface BuilderClip extends ShowPackageClip {
   sourceName: string;
   sourceAttribution?: string;
   videoTitle: string;
+  youTubeId?: string;
+  thumbnailUrl?: string;
+  watchUrl?: string;
   startSec: number;
   endSec: number;
   transcriptExcerpt?: string;
@@ -214,24 +217,24 @@ function ClipCard({
     <Card className={rejected ? "opacity-60" : undefined}>
       <CardContent className="p-5">
         <div className="flex gap-4">
-          {/* Rank + preview placeholder */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-lg font-bold text-primary">
-              {clip.rank}
-            </div>
-            <div className="flex aspect-[9/16] w-16 items-center justify-center rounded-md border border-dashed border-border text-[10px] text-muted-foreground">
-              9:16
-            </div>
-            {canReorder && (
-              <div className="flex flex-col gap-1">
-                <Button size="icon" variant="outline" onClick={onMoveUp} disabled={isFirst}>
-                  ↑
-                </Button>
-                <Button size="icon" variant="outline" onClick={onMoveDown} disabled={isLast}>
-                  ↓
-                </Button>
+          {/* Rank + real video preview */}
+          <div className="flex w-64 shrink-0 flex-col items-center gap-2">
+            <div className="flex w-full items-center justify-between">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-base font-bold text-primary">
+                {clip.rank}
               </div>
-            )}
+              {canReorder && (
+                <div className="flex gap-1">
+                  <Button size="icon" variant="outline" onClick={onMoveUp} disabled={isFirst}>
+                    ↑
+                  </Button>
+                  <Button size="icon" variant="outline" onClick={onMoveDown} disabled={isLast}>
+                    ↓
+                  </Button>
+                </div>
+              )}
+            </div>
+            <ClipPreview clip={clip} />
           </div>
 
           <div className="min-w-0 flex-1 space-y-3">
@@ -330,6 +333,61 @@ function ClipCard({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// Real in-app preview: embeds the source video (trimmed to the clip start) when
+// a YouTube id is present, falls back to a thumbnail link, then a placeholder.
+function ClipPreview({ clip }: { clip: BuilderClip }) {
+  if (clip.youTubeId) {
+    return (
+      <div className="w-full overflow-hidden rounded-md border border-border">
+        <div className="relative aspect-video w-full bg-black">
+          <iframe
+            className="absolute inset-0 h-full w-full"
+            src={youTubeEmbed(clip.youTubeId, clip.startSec)}
+            title={clip.videoTitle}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+        <a
+          href={clip.watchUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="block bg-secondary/60 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+        >
+          Open source ↗ · plays from {formatTimeRange(clip.startSec, clip.endSec)}
+        </a>
+      </div>
+    );
+  }
+  if (clip.thumbnailUrl || clip.watchUrl) {
+    return (
+      <a
+        href={clip.watchUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="block w-full overflow-hidden rounded-md border border-border"
+      >
+        {clip.thumbnailUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={clip.thumbnailUrl} alt={clip.videoTitle} className="aspect-video w-full object-cover" />
+        ) : (
+          <div className="flex aspect-video w-full items-center justify-center bg-secondary text-xs text-muted-foreground">
+            Watch source ↗
+          </div>
+        )}
+        <span className="block bg-secondary/60 px-2 py-1 text-[11px] text-muted-foreground">
+          Source video (no in-app embed) ↗
+        </span>
+      </a>
+    );
+  }
+  return (
+    <div className="flex aspect-video w-full items-center justify-center rounded-md border border-dashed border-border text-xs text-muted-foreground">
+      No preview available
+    </div>
   );
 }
 

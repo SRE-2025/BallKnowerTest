@@ -70,6 +70,7 @@ async function main() {
         title: v.title,
         externalUrl: v.externalUrl,
         thumbnailUrl: v.thumbnailUrl,
+        youTubeId: v.youTubeId,
         durationSec: v.durationSec,
         publishedAt: v.publishedAt ? new Date(v.publishedAt) : null,
         status: v.status,

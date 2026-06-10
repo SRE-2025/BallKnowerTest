@@ -192,6 +192,7 @@ model Video {
   title        String
   externalUrl  String?
   thumbnailUrl String?
+  youTubeId    String?     // embeddable source id when available
   durationSec  Int
   publishedAt  DateTime?
   status       VideoStatus @default(IMPORTED)

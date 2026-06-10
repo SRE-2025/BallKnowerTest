@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-type Result = { ok: true; detail: string } | { ok: false; error: string };
+type Result = { ok: true; detail: string; url?: string } | { ok: false; error: string };
 
 function requireDb(): { ok: false; error: string } | null {
   if ((process.env.DATA_SOURCE ?? "mock") !== "database") {
@@ -19,7 +19,11 @@ export async function renderPackageAction(packageId: string): Promise<Result> {
     const { renderPackage } = await import("@/lib/rendering/render-package");
     const out = await renderPackage(packageId);
     revalidatePath(`/packages/${packageId}`);
-    return { ok: true, detail: out.rendered ? `Draft rendered: ${out.fileUrl}` : `Edit plan written: ${out.fileUrl}` };
+    return {
+      ok: true,
+      detail: out.rendered ? "Draft stitched." : "Edit plan written (install ffmpeg to produce video).",
+      url: out.fileUrl,
+    };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Render error" };
   }

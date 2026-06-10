@@ -103,6 +103,7 @@ export interface Video {
   title: string;
   externalUrl?: string;
   thumbnailUrl?: string;
+  youTubeId?: string; // when present, the clip is embeddable/playable in-app
   durationSec: number;
   publishedAt?: string;
   status: VideoStatus;

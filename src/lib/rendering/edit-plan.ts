@@ -16,6 +16,8 @@ export interface EditSegment {
   lowerThird?: string;
   caption?: string;
   attribution?: string;
+  // Absolute path to the filmed commentary file for this slot, if uploaded.
+  commentaryFile?: string;
   durationSec: number;
 }
 

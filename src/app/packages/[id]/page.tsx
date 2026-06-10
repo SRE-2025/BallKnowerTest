@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getRepository } from "@/lib/repository";
 import { ShowBuilder, type BuilderClip } from "./show-builder";
 import { PipelineActions } from "@/components/pipeline-actions";
+import { CommentaryStudio } from "@/components/commentary-studio";
 
 export default async function PackageDetailPage({ params }: { params: { id: string } }) {
   const repo = getRepository();
@@ -27,6 +28,9 @@ export default async function PackageDetailPage({ params }: { params: { id: stri
         sourceName: source?.providerName ?? "Unknown source",
         sourceAttribution: source?.settings.attributionText,
         videoTitle: video?.title ?? "Unknown video",
+        youTubeId: video?.youTubeId,
+        thumbnailUrl: video?.thumbnailUrl,
+        watchUrl: video?.externalUrl,
         startSec: pc.finalStartSec ?? candidate?.startSec ?? 0,
         endSec: pc.finalEndSec ?? candidate?.endSec ?? 0,
         transcriptExcerpt: candidate?.transcriptExcerpt,
@@ -49,8 +53,13 @@ export default async function PackageDetailPage({ params }: { params: { id: stri
         render={pkg.render}
         posting={pkg.posting}
       />
-      <div className="mt-6 max-w-md">
-        <PipelineActions packageId={pkg.id} />
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <CommentaryStudio packageId={pkg.id} prompts={pkg.filmingPrompts} />
+        </div>
+        <div>
+          <PipelineActions packageId={pkg.id} />
+        </div>
       </div>
     </div>
   );

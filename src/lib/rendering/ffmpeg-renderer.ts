@@ -30,14 +30,18 @@ export async function renderEditPlan(plan: EditPlan, packageId: string): Promise
     };
   }
 
-  // Build a simple vertical draft: a colored background per segment with the
-  // segment label burned in via drawtext. This proves the 9:16 pipeline and the
-  // caption/lower-third overlay path end-to-end without source media.
   const mp4Key = `${packageId}-${Date.now()}.mp4`;
   const out = path.join(RENDERS_DIR, mp4Key);
+  const hasCommentary = plan.segments.some((s) => s.commentaryFile);
   try {
-    await runFfmpegSlideshow(plan, out);
-    return { fileUrl: `/renders/${mp4Key}`, notes: "Draft render produced (placeholder visuals; clip media composited in a later pass).", rendered: true };
+    await runFfmpegComposite(plan, out);
+    return {
+      fileUrl: `/renders/${mp4Key}`,
+      notes: hasCommentary
+        ? "Draft stitched: your commentary edited together with title cards for each play (insert cleared highlight footage where licensed)."
+        : "Draft render produced (title cards only — upload commentary and re-render to stitch it in).",
+      rendered: true,
+    };
   } catch (e) {
     return {
       fileUrl: `/renders/${planKey}`,
@@ -55,28 +59,62 @@ function ffmpegAvailable(): Promise<boolean> {
   });
 }
 
-// Generates one drawtext-labeled solid-color clip per segment and concatenates.
-function runFfmpegSlideshow(plan: EditPlan, outPath: string): Promise<void> {
+// Composites the timeline into one 1080x1920 video with audio. Commentary slots
+// use the uploaded filmed clip (scaled/padded to 9:16); every other slot becomes
+// a title card with silent audio. All segments are normalized to the same format
+// so the concat filter joins them cleanly.
+function runFfmpegComposite(plan: EditPlan, outPath: string): Promise<void> {
   const { width, height } = plan;
   const inputs: string[] = [];
-  const filters: string[] = [];
+  const vFilters: string[] = [];
+  const aLabels: string[] = [];
+  const vLabels: string[] = [];
+  let inputIdx = 0;
+
   plan.segments.forEach((seg, i) => {
-    const color = seg.kind === "clip" ? "0x111827" : "0xea580c";
-    inputs.push("-f", "lavfi", "-t", String(seg.durationSec), "-i", `color=c=${color}:s=${width}x${height}:r=30`);
-    const text = (seg.onScreenText || seg.label).replace(/[:'\\]/g, " ");
-    filters.push(
-      `[${i}:v]drawtext=text='${text}':fontcolor=white:fontsize=64:x=(w-text_w)/2:y=(h-text_h)/2[v${i}]`
-    );
+    if (seg.commentaryFile) {
+      // Real filmed commentary: scale to fit 9:16, pad, normalize.
+      inputs.push("-i", seg.commentaryFile);
+      const vi = inputIdx++;
+      vFilters.push(
+        `[${vi}:v]scale=${width}:${height}:force_original_aspect_ratio=decrease,` +
+          `pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,format=yuv420p[v${i}]`
+      );
+      // Re-encode audio to a common format; assumes filmed commentary has audio.
+      vFilters.push(`[${vi}:a]aresample=44100,aformat=channel_layouts=stereo[a${i}]`);
+    } else {
+      // Title card: solid color + burned-in text, plus silent audio.
+      const color = seg.kind === "clip" ? "0x111827" : "0xea580c";
+      inputs.push("-f", "lavfi", "-t", String(seg.durationSec), "-i", `color=c=${color}:s=${width}x${height}:r=30`);
+      const ci = inputIdx++;
+      inputs.push("-f", "lavfi", "-t", String(seg.durationSec), "-i", "anullsrc=channel_layout=stereo:sample_rate=44100");
+      const ai = inputIdx++;
+      const main = esc(seg.onScreenText || seg.label);
+      const sub = esc(seg.lowerThird || seg.caption || "");
+      let chain = `[${ci}:v]drawtext=text='${main}':fontcolor=white:fontsize=72:x=(w-text_w)/2:y=(h-text_h)/2-80`;
+      if (sub) chain += `,drawtext=text='${sub}':fontcolor=white:fontsize=40:x=(w-text_w)/2:y=(h-text_h)/2+40`;
+      vFilters.push(`${chain},format=yuv420p[v${i}]`);
+      vFilters.push(`[${ai}:a]aformat=channel_layouts=stereo[a${i}]`);
+    }
+    vLabels.push(`[v${i}]`);
+    aLabels.push(`[a${i}]`);
   });
-  const concatInputs = plan.segments.map((_, i) => `[v${i}]`).join("");
-  filters.push(`${concatInputs}concat=n=${plan.segments.length}:v=1:a=0[outv]`);
+
+  const concat = `${plan.segments.map((_, i) => `${vLabels[i]}${aLabels[i]}`).join("")}concat=n=${plan.segments.length}:v=1:a=1[outv][outa]`;
+  const filterComplex = [...vFilters, concat].join(";");
 
   const args = [
     ...inputs,
     "-filter_complex",
-    filters.join(";"),
+    filterComplex,
     "-map",
     "[outv]",
+    "-map",
+    "[outa]",
+    "-c:v",
+    "libx264",
+    "-c:a",
+    "aac",
     "-pix_fmt",
     "yuv420p",
     "-y",
@@ -88,6 +126,11 @@ function runFfmpegSlideshow(plan: EditPlan, outPath: string): Promise<void> {
     let stderr = "";
     p.stderr.on("data", (d) => (stderr += d.toString()));
     p.on("error", reject);
-    p.on("close", (code) => (code === 0 ? resolve() : reject(new Error(stderr.slice(-300)))));
+    p.on("close", (code) => (code === 0 ? resolve() : reject(new Error(stderr.slice(-400)))));
   });
+}
+
+// Escape text for ffmpeg drawtext.
+function esc(s: string): string {
+  return s.replace(/[\\:']/g, " ").replace(/[^\x20-\x7E]/g, "").slice(0, 60);
 }

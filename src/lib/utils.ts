@@ -31,3 +31,19 @@ export function formatTimecode(seconds: number): string {
 export function formatTimeRange(start: number, end: number): string {
   return `${formatTimecode(start)} – ${formatTimecode(end)}`;
 }
+
+/** YouTube embed URL (start time optional) for in-app playback. */
+export function youTubeEmbed(id: string, startSec?: number): string {
+  const t = startSec ? `?start=${Math.floor(startSec)}` : "";
+  return `https://www.youtube.com/embed/${id}${t}`;
+}
+
+/** YouTube watch URL. */
+export function youTubeWatch(id: string): string {
+  return `https://www.youtube.com/watch?v=${id}`;
+}
+
+/** YouTube thumbnail URL. */
+export function youTubeThumb(id: string): string {
+  return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+}

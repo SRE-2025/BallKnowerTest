@@ -40,18 +40,19 @@ export const mockSources: Source[] = [
   },
   {
     id: "src_court_vision",
-    providerName: "Court Vision",
-    showName: "Court Vision Hoops",
+    providerName: "Creator Highlights",
+    showName: "Influencers & Trick Shots",
     type: "YOUTUBE_CHANNEL",
-    sportLeague: "NBA",
+    sportLeague: "Entertainment / Trick Shots",
     importMethod: "YOUTUBE",
     active: true,
-    notes: "Basketball-focused channel. Strong dunk and crossover clips.",
+    notes:
+      "Creator + entertainer channel: Savannah Bananas, Dude Perfect, trick-shot artists. Ranked after real-athlete plays but eligible for the Top 7.",
     settings: {
-      allowedPlatforms: ["YOUTUBE_SHORTS", "INSTAGRAM_REELS"],
-      maxClipSeconds: 25,
-      attributionText: "Footage via Court Vision",
-      notes: "NBA only.",
+      allowedPlatforms: ["YOUTUBE_SHORTS", "INSTAGRAM_REELS", "TIKTOK"],
+      maxClipSeconds: 30,
+      attributionText: "Footage via original creator (credit on screen)",
+      notes: "Always credit the original creator on screen.",
     },
   },
   {

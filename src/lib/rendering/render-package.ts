@@ -1,3 +1,4 @@
+import path from "path";
 import { prisma } from "@/lib/db";
 import { buildEditPlan, type PlanClip } from "./edit-plan";
 import { renderEditPlan } from "./ffmpeg-renderer";
@@ -26,6 +27,25 @@ export async function renderPackage(packageId: string): Promise<{ renderJobId: s
   }));
 
   const plan = buildEditPlan({ format: pkg.format, clips: planClips });
+
+  // Splice in any uploaded commentary: match each plan segment's commentarySlot
+  // to a FilmingPrompt that has an upload, and attach the local file path.
+  const prompts = await prisma.filmingPrompt.findMany({
+    where: { packageId },
+    include: { upload: true },
+  });
+  const fileBySlot = new Map<string, string>();
+  for (const fp of prompts) {
+    if (fp.upload?.fileUrl) {
+      // fileUrl like "/uploads/..." served from public/; resolve to disk path.
+      fileBySlot.set(fp.slot, path.join(process.cwd(), "public", fp.upload.fileUrl));
+    }
+  }
+  for (const seg of plan.segments) {
+    if (seg.commentarySlot && fileBySlot.has(seg.commentarySlot)) {
+      seg.commentaryFile = fileBySlot.get(seg.commentarySlot);
+    }
+  }
 
   const job = await prisma.renderJob.create({
     data: { packageId, status: "RENDERING", plan: plan as unknown as Prisma.InputJsonValue },

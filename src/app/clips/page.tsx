@@ -12,7 +12,8 @@ export default async function ClipsPage() {
     repo.getVideos(),
   ]);
   const sourceName = (id: string) => sources.find((s) => s.id === id)?.providerName ?? id;
-  const videoTitle = (id: string) => videos.find((v) => v.id === id)?.title ?? id;
+  const video = (id: string) => videos.find((v) => v.id === id);
+  const videoTitle = (id: string) => video(id)?.title ?? id;
 
   return (
     <div>
@@ -30,6 +31,16 @@ export default async function ClipsPage() {
                   {formatTimeRange(c.startSec, c.endSec)}
                 </span>
               </div>
+              {(() => {
+                const v = video(c.videoId);
+                if (!v?.thumbnailUrl) return null;
+                return (
+                  <a href={v.externalUrl} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-md border border-border">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={v.thumbnailUrl} alt={v.title} className="aspect-video w-full object-cover" />
+                  </a>
+                );
+              })()}
               <p className="text-sm font-medium">{videoTitle(c.videoId)}</p>
               {c.transcriptExcerpt && (
                 <blockquote className="border-l-2 border-primary/40 pl-3 text-sm italic text-muted-foreground">
