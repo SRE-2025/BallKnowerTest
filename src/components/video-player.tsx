@@ -59,6 +59,7 @@ export function VideoPlayer({
   }
 
   const src = `https://www.youtube.com/embed/${youTubeId}?autoplay=1${startSec ? `&start=${Math.floor(startSec)}` : ""}`;
+  const watch = watchUrl ?? `https://www.youtube.com/watch?v=${youTubeId}`;
 
   return (
     <div className={cn("relative aspect-video w-full overflow-hidden rounded-md bg-black", className)}>
@@ -76,6 +77,15 @@ export function VideoPlayer({
           <PlayBadge />
         </button>
       )}
+      {/* Always-available path to the real video, even if the embed is blocked. */}
+      <a
+        href={watch}
+        target="_blank"
+        rel="noreferrer"
+        className="absolute bottom-1 right-1 z-10 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white hover:bg-black"
+      >
+        YouTube ↗
+      </a>
     </div>
   );
 }
