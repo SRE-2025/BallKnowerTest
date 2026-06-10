@@ -316,6 +316,11 @@ model ShowPackageClip {
   suggestedTransition  String?
   suggestedFilmingPrompt String?
 
+  // Denormalized from the AI producer so the package view renders without joins.
+  selectionReason String?
+  needsReview     Boolean  @default(false)
+  reviewFlags     String[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -359,6 +364,7 @@ model RenderJob {
   packageId String
   package   ShowPackage  @relation(fields: [packageId], references: [id], onDelete: Cascade)
   status    RenderStatus @default(QUEUED)
+  plan      Json?        // Timeline / edit plan the renderer consumes.
   error     String?
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt

@@ -1,15 +1,17 @@
 import type { Repository } from "./types";
 import { mockRepository } from "./mock-repository";
 
-// Selects the active data source. Phase 1 only ships "mock". In Phase 2 a
-// "database" branch returns a Prisma-backed Repository here — no UI changes.
+// Selects the active data source from DATA_SOURCE. "mock" (default, Phase 1) or
+// "database" (Phase 2+, Prisma/Postgres). The UI never imports a concrete impl.
 export function getRepository(): Repository {
   const source = process.env.DATA_SOURCE ?? "mock";
   switch (source) {
+    case "database": {
+      // Lazy require so mock mode never pulls in the Prisma client.
+      const { prismaRepository } = require("./prisma-repository") as typeof import("./prisma-repository");
+      return prismaRepository;
+    }
     case "mock":
-      return mockRepository;
-    // case "database":
-    //   return prismaRepository; // added in Phase 2
     default:
       return mockRepository;
   }
