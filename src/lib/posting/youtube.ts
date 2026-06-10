@@ -41,12 +41,21 @@ export function createYouTubeProvider(accessToken: string | undefined): PostingP
         if (!uploadUrl) return { ok: false, error: "YouTube did not return an upload URL." };
 
         // Step 2: upload the rendered video bytes to the resumable session.
-        const media = await fetch(req.videoUrl);
-        const bytes = Buffer.from(await media.arrayBuffer());
+        // Local renders live under public/ (path like "/renders/x.mp4"); read
+        // from disk. Anything else is treated as a remote URL.
+        let bytes: Buffer;
+        if (req.videoUrl.startsWith("/")) {
+          const { promises: fs } = await import("fs");
+          const path = await import("path");
+          bytes = await fs.readFile(path.join(process.cwd(), "public", req.videoUrl));
+        } else {
+          const media = await fetch(req.videoUrl);
+          bytes = Buffer.from(await media.arrayBuffer());
+        }
         const upload = await fetch(uploadUrl, {
           method: "PUT",
           headers: { "Content-Type": "video/*", "Content-Length": String(bytes.length) },
-          body: bytes,
+          body: new Uint8Array(bytes),
         });
         if (!upload.ok) return { ok: false, error: `YouTube upload failed: ${upload.status}` };
         const result = (await upload.json()) as { id?: string };

@@ -15,7 +15,9 @@ export interface StorageProvider {
   put(key: string, data: Buffer, contentType?: string): Promise<StoredObject>;
 }
 
-const LOCAL_DIR = path.join(process.cwd(), "uploads");
+// Local provider writes under public/ so Next serves the files directly
+// (commentary clips + rendered drafts are playable at /uploads/* and /renders/*).
+const LOCAL_DIR = path.join(process.cwd(), "public", "uploads");
 
 const localStorage: StorageProvider = {
   name: "local",

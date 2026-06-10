@@ -10,6 +10,10 @@ human team for review, filming, and final approval before anything is posted.
 > Nothing posts automatically. Filming, editorial changes, and final approval
 > are always human.
 
+> 🚀 **Just want to run it?** See [`QUICKSTART.md`](QUICKSTART.md).
+> `npm install && npm run dev` for the instant demo, or `npm run setup` for the
+> full database-backed pipeline.
+
 ---
 
 ## 🚦 Current status — all 8 phases implemented

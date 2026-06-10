@@ -103,6 +103,20 @@ export async function generatePackage(opts: GenerateOptions): Promise<{ packageI
     },
   });
 
+  // Attach default posting targets so the package can be posted/scheduled once
+  // approved. Platforms are scheduled immediately (scheduledFor null = post now).
+  const DEFAULT_PLATFORMS = ["YOUTUBE_SHORTS", "TIKTOK", "INSTAGRAM_REELS"] as const;
+  for (const platform of DEFAULT_PLATFORMS) {
+    const account = await prisma.socialAccount.upsert({
+      where: { platform_handle: { platform, handle: "@ballknower" } },
+      create: { platform, handle: "@ballknower", displayName: "BallKnower" },
+      update: {},
+    });
+    await prisma.socialPost.create({
+      data: { packageId: pkg.id, socialAccountId: account.id, platform, status: "SCHEDULED" },
+    });
+  }
+
   // Persist per-clip AI analyses for auditability.
   const createdClips = await prisma.showPackageClip.findMany({ where: { packageId: pkg.id } });
   await prisma.aiAnalysis.createMany({

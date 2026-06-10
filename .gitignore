@@ -44,9 +44,9 @@ next-env.d.ts
 /prisma/*.db
 /prisma/migrations/dev/
 
-# local uploads + renders (Phase 4/5)
-/uploads
-/renders
+# local uploads + renders (Phase 4/5) — served from public/ in dev
+/public/uploads
+/public/renders
 
 # editor
 .idea/

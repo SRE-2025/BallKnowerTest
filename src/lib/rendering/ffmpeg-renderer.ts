@@ -9,7 +9,8 @@ export interface RenderOutput {
   rendered: boolean; // true if an actual mp4 was produced
 }
 
-const RENDERS_DIR = path.join(process.cwd(), "renders");
+// Written under public/ so drafts are playable at /renders/* during local dev.
+const RENDERS_DIR = path.join(process.cwd(), "public", "renders");
 
 // Renders an EditPlan to a 9:16 draft. If ffmpeg is available it composes a
 // caption/lower-third slideshow as a stand-in for the full edit (real clip media
