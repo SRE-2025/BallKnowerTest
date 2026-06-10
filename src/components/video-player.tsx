@@ -3,11 +3,13 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-// Thumbnail-first YouTube player. Shows the thumbnail image immediately with a
-// play button; loads the actual iframe only on click. If the thumbnail image
-// fails to load (e.g. network can't reach i.ytimg.com), it degrades to a labeled
-// card with a play button instead of a broken image — so a "video" is always
-// visible, never a blank/placeholder.
+// Thumbnail-first YouTube player that NEVER shows a blank/black box.
+//
+// A titled poster card is always rendered as the base layer. The YouTube
+// thumbnail image is layered on top and only becomes visible once it actually
+// loads; if it's blocked, hung, or errors, the poster shows through. Clicking
+// loads the real embed; a "YouTube ↗" link is always available as a fallback
+// path to the source (useful when the embed is blocked).
 export function VideoPlayer({
   youTubeId,
   thumbnailUrl,
@@ -24,45 +26,51 @@ export function VideoPlayer({
   className?: string;
 }) {
   const [playing, setPlaying] = React.useState(false);
-  const [imgError, setImgError] = React.useState(false);
+  const [imgLoaded, setImgLoaded] = React.useState(false);
 
   const thumb = thumbnailUrl ?? (youTubeId ? `https://i.ytimg.com/vi/${youTubeId}/hqdefault.jpg` : undefined);
+  const watch = watchUrl ?? (youTubeId ? `https://www.youtube.com/watch?v=${youTubeId}` : undefined);
 
-  const Thumb =
-    thumb && !imgError ? (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={thumb}
-        alt={title}
-        onError={() => setImgError(true)}
-        className="h-full w-full object-cover transition group-hover:opacity-90"
-      />
-    ) : (
-      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-secondary to-accent p-3 text-center">
+  // Always-visible base poster (no network needed) + optional thumbnail overlay.
+  const Poster = (
+    <>
+      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-secondary to-accent p-3 text-center">
         <span className="line-clamp-3 text-xs font-medium text-foreground">{title}</span>
       </div>
-    );
+      {thumb && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={thumb}
+          alt={title}
+          onLoad={() => setImgLoaded(true)}
+          className={cn(
+            "absolute inset-0 h-full w-full object-cover transition-opacity duration-300",
+            imgLoaded ? "opacity-100" : "opacity-0"
+          )}
+        />
+      )}
+      <PlayBadge />
+    </>
+  );
 
-  // No embeddable id (e.g. NHL.com): thumbnail links out to the source.
+  // No embeddable id (e.g. NHL.com): the whole poster links to the source.
   if (!youTubeId) {
     return (
       <a
-        href={watchUrl}
+        href={watch}
         target="_blank"
         rel="noreferrer"
-        className={cn("group relative block aspect-video w-full overflow-hidden rounded-md bg-black", className)}
+        className={cn("group relative block aspect-video w-full overflow-hidden rounded-md bg-secondary", className)}
       >
-        {Thumb}
-        <PlayBadge />
+        {Poster}
       </a>
     );
   }
 
   const src = `https://www.youtube.com/embed/${youTubeId}?autoplay=1${startSec ? `&start=${Math.floor(startSec)}` : ""}`;
-  const watch = watchUrl ?? `https://www.youtube.com/watch?v=${youTubeId}`;
 
   return (
-    <div className={cn("relative aspect-video w-full overflow-hidden rounded-md bg-black", className)}>
+    <div className={cn("relative aspect-video w-full overflow-hidden rounded-md bg-secondary", className)}>
       {playing ? (
         <iframe
           className="absolute inset-0 h-full w-full"
@@ -73,19 +81,19 @@ export function VideoPlayer({
         />
       ) : (
         <button type="button" onClick={() => setPlaying(true)} className="group absolute inset-0 h-full w-full">
-          {Thumb}
-          <PlayBadge />
+          {Poster}
         </button>
       )}
-      {/* Always-available path to the real video, even if the embed is blocked. */}
-      <a
-        href={watch}
-        target="_blank"
-        rel="noreferrer"
-        className="absolute bottom-1 right-1 z-10 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white hover:bg-black"
-      >
-        YouTube ↗
-      </a>
+      {watch && (
+        <a
+          href={watch}
+          target="_blank"
+          rel="noreferrer"
+          className="absolute bottom-1 right-1 z-10 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white hover:bg-black"
+        >
+          YouTube ↗
+        </a>
+      )}
     </div>
   );
 }
