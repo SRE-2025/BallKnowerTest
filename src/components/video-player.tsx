@@ -3,9 +3,11 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-// Thumbnail-first YouTube player. Shows the thumbnail image immediately (cheap,
-// reliable) with a play button; loads the actual iframe only on click. Far more
-// dependable than auto-loading many iframes, and the user sees video art at once.
+// Thumbnail-first YouTube player. Shows the thumbnail image immediately with a
+// play button; loads the actual iframe only on click. If the thumbnail image
+// fails to load (e.g. network can't reach i.ytimg.com), it degrades to a labeled
+// card with a play button instead of a broken image — so a "video" is always
+// visible, never a blank/placeholder.
 export function VideoPlayer({
   youTubeId,
   thumbnailUrl,
@@ -22,31 +24,40 @@ export function VideoPlayer({
   className?: string;
 }) {
   const [playing, setPlaying] = React.useState(false);
+  const [imgError, setImgError] = React.useState(false);
 
-  // No embeddable id (e.g. NHL.com): show the thumbnail and link out.
-  if (!youTubeId) {
-    const content = thumbnailUrl ? (
+  const thumb = thumbnailUrl ?? (youTubeId ? `https://i.ytimg.com/vi/${youTubeId}/hqdefault.jpg` : undefined);
+
+  const Thumb =
+    thumb && !imgError ? (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={thumbnailUrl} alt={title} className="h-full w-full object-cover" />
+      <img
+        src={thumb}
+        alt={title}
+        onError={() => setImgError(true)}
+        className="h-full w-full object-cover transition group-hover:opacity-90"
+      />
     ) : (
-      <div className="flex h-full w-full items-center justify-center bg-secondary text-xs text-muted-foreground">
-        Watch source ↗
+      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-secondary to-accent p-3 text-center">
+        <span className="line-clamp-3 text-xs font-medium text-foreground">{title}</span>
       </div>
     );
+
+  // No embeddable id (e.g. NHL.com): thumbnail links out to the source.
+  if (!youTubeId) {
     return (
       <a
         href={watchUrl}
         target="_blank"
         rel="noreferrer"
-        className={cn("relative block aspect-video w-full overflow-hidden rounded-md bg-black", className)}
+        className={cn("group relative block aspect-video w-full overflow-hidden rounded-md bg-black", className)}
       >
-        {content}
+        {Thumb}
         <PlayBadge />
       </a>
     );
   }
 
-  const thumb = thumbnailUrl ?? `https://i.ytimg.com/vi/${youTubeId}/hqdefault.jpg`;
   const src = `https://www.youtube.com/embed/${youTubeId}?autoplay=1${startSec ? `&start=${Math.floor(startSec)}` : ""}`;
 
   return (
@@ -61,8 +72,7 @@ export function VideoPlayer({
         />
       ) : (
         <button type="button" onClick={() => setPlaying(true)} className="group absolute inset-0 h-full w-full">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={thumb} alt={title} className="h-full w-full object-cover transition group-hover:opacity-90" />
+          {Thumb}
           <PlayBadge />
         </button>
       )}
