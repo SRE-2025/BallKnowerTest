@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/status-badge";
+import { GenerateButton } from "@/components/generate-button";
 import { titleize } from "@/lib/utils";
 
 export default async function PackagesPage() {
@@ -15,7 +16,9 @@ export default async function PackagesPage() {
       <PageHeader
         title="Show Packages"
         description="Every format the AI producer can build. Open one to review, reorder, edit copy and approve."
-      />
+      >
+        <GenerateButton />
+      </PageHeader>
       <div className="grid gap-4 lg:grid-cols-2">
         {packages.map((pkg) => (
           <Card key={pkg.id}>

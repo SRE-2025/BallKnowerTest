@@ -13,7 +13,8 @@
     "prisma:format": "prisma format",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
-    "pipeline": "tsx scripts/run-pipeline.ts"
+    "pipeline": "tsx scripts/run-pipeline.ts",
+    "generate": "tsx scripts/generate-package.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
