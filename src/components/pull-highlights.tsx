@@ -58,6 +58,30 @@ export function PullHighlights() {
     }
   }
 
+  async function ingest() {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/highlights", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "ingest",
+          sourceId: "src_highlight_wire",
+          league: league || undefined,
+          query: query || undefined,
+          since: "lastnight",
+        }),
+      });
+      const data = await res.json();
+      setMsg(res.ok ? `Imported ${data.imported}, skipped ${data.skipped}.` : data.error);
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <Card className="mb-6">
       <CardContent className="space-y-4 p-5">
@@ -87,6 +111,9 @@ export function PullHighlights() {
           </label>
           <Button onClick={discover} disabled={busy}>
             {busy ? "Pulling…" : "Pull last night's highlights"}
+          </Button>
+          <Button variant="outline" onClick={ingest} disabled={busy || results.length === 0}>
+            {busy ? "…" : "Add to library"}
           </Button>
           {msg && <span className="text-xs text-muted-foreground">{msg}</span>}
         </div>

@@ -91,7 +91,8 @@ Open <http://localhost:3000>.
 | `npm run pipeline -- <srcId> '{json}'` | Ingest → transcribe → detect for a source |
 | `npm run generate -- TOP_7_PLAYS` | Run the AI producer to build a package |
 | `npm run render -- <packageId>` | Render a 9:16 draft |
-| `npm run post -- <packageId>` | Post an approved package |
+| `npm run post -- <packageId>` | Post an approved package now |
+| `npm run scheduler` | Post any approved packages whose scheduled time is due |
 | `npm run analytics` | Import per-post analytics |
 
 ---

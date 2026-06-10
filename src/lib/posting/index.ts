@@ -1,6 +1,7 @@
 import type { Platform } from "@/lib/types";
 import type { PostingProvider, PostRequest, PostResult } from "./types";
 import { createYouTubeProvider } from "./youtube";
+import { realProviderFor } from "./social";
 
 // Mock provider: simulates a successful post and returns a plausible URL. Used
 // for any platform not yet wired, or when real credentials are absent — keeps
@@ -16,14 +17,15 @@ function mockProvider(platform: Platform): PostingProvider {
   };
 }
 
-// Selects a provider per platform. YouTube uses the real provider when a token
-// is configured; everything else (and YouTube without a token) uses the mock.
+// Selects a provider per platform. Uses the real, credential-gated provider when
+// configured (YouTube, TikTok, Instagram, Facebook, X); otherwise the mock.
 export function getPostingProvider(platform: Platform): PostingProvider {
   if (platform === "YOUTUBE_SHORTS") {
     const token = process.env.YOUTUBE_ACCESS_TOKEN;
     if (token) return createYouTubeProvider(token);
+    return mockProvider(platform);
   }
-  return mockProvider(platform);
+  return realProviderFor(platform) ?? mockProvider(platform);
 }
 
 export type { PostingProvider, PostRequest, PostResult } from "./types";

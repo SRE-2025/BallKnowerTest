@@ -23,6 +23,7 @@
     "generate": "tsx scripts/generate-package.ts",
     "render": "tsx scripts/render-package.ts",
     "post": "tsx scripts/post-package.ts",
+    "scheduler": "tsx scripts/run-scheduler.ts",
     "analytics": "tsx scripts/import-analytics.ts"
   },
   "prisma": {
