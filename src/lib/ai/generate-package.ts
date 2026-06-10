@@ -47,10 +47,15 @@ export async function generatePackage(opts: GenerateOptions): Promise<{ packageI
     transcriptExcerpt: c.transcriptExcerpt ?? undefined,
   }));
 
+  // Close the loop: feed historical performance hints into selection.
+  const { computePerformanceHints } = await import("@/lib/analytics/feedback");
+  const performanceHints = await computePerformanceHints().catch(() => []);
+
   const { result, usedModel } = await runProducer({
     format: opts.format,
     maxSelections: FORMAT_MAX[opts.format],
     candidates: inputClips,
+    performanceHints,
   });
 
   const byId = new Map(candidates.map((c) => [c.id, c]));

@@ -44,6 +44,10 @@ next-env.d.ts
 /prisma/*.db
 /prisma/migrations/dev/
 
+# local uploads + renders (Phase 4/5)
+/uploads
+/renders
+
 # editor
 .idea/
 .vscode/*

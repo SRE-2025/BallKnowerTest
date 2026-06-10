@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/status-badge";
+import { CommentaryUploader } from "@/components/commentary-uploader";
 import { titleize } from "@/lib/utils";
 
 export default async function FilmingPage() {
@@ -42,13 +43,7 @@ export default async function FilmingPage() {
                       </Badge>
                       <span className="min-w-0 flex-1 text-muted-foreground">{fp.prompt}</span>
                       <StatusBadge status={fp.status} />
-                      <button
-                        disabled
-                        title="Commentary upload arrives in Phase 4"
-                        className="cursor-not-allowed rounded-md border border-dashed border-border px-3 py-1 text-xs text-muted-foreground"
-                      >
-                        Upload clip
-                      </button>
+                      <CommentaryUploader filmingPromptId={fp.id} initialStatus={fp.status} />
                     </li>
                   ))}
               </ul>

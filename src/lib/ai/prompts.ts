@@ -28,6 +28,11 @@ export function buildProducerUserPrompt(req: ProducerRequest): string {
         (c.transcriptExcerpt ? ` | transcript="${c.transcriptExcerpt}"` : "")
     );
   }
+  if (req.performanceHints && req.performanceHints.length > 0) {
+    lines.push("");
+    lines.push("Performance signals from past posts (use as a tiebreaker, not a hard rule):");
+    for (const h of req.performanceHints) lines.push(`- ${h}`);
+  }
   lines.push("");
   lines.push("Call submit_show_package with your ranked selections, all copy fields, and the filming prompts.");
   return lines.join("\n");

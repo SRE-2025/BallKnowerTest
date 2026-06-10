@@ -12,6 +12,7 @@ const NAV = [
   { href: "/sources", label: "Source Library", group: "Library" },
   { href: "/videos", label: "Videos", group: "Library" },
   { href: "/clips", label: "Candidate Clips", group: "Library" },
+  { href: "/analytics", label: "Analytics", group: "Insights" },
 ];
 
 export function Sidebar() {

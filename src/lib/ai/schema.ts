@@ -128,4 +128,6 @@ export interface ProducerRequest {
   format: PackageFormat;
   maxSelections: number;
   candidates: ProducerInputClip[];
+  // Phase 8 feedback loop: performance-derived hints to bias selection.
+  performanceHints?: string[];
 }

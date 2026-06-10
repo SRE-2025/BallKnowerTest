@@ -70,14 +70,43 @@ sources.
 
 | Phase | Theme | Status |
 |-------|-------|--------|
-| 1 | Foundation & mock producer dashboard | ✅ this repo |
-| 2 | Real ingestion + transcription (one source first) | planned |
-| 3 | Real Claude AI producer (structured JSON) | planned |
-| 4 | User filming uploads + slot assignment | planned |
-| 5 | Automated FFmpeg rendering (9:16, captions, lower thirds) | planned |
-| 6 | Review, versioning & approval records | planned |
-| 7 | Posting & scheduling (YouTube Shorts first) | planned |
-| 8 | Analytics & optimization feedback loop | planned |
+| 1 | Foundation & mock producer dashboard | ✅ implemented |
+| 2 | Real ingestion + transcription (RSS/manual) | ✅ implemented |
+| 3 | Real Claude AI producer (structured JSON) | ✅ implemented |
+| 4 | User filming uploads + slot assignment | ✅ implemented |
+| 5 | Automated FFmpeg rendering (9:16, captions) | ✅ implemented |
+| 6 | Review, versioning & approval records | ✅ implemented |
+| 7 | Posting & scheduling (YouTube Shorts first) | ✅ implemented |
+| 8 | Analytics & optimization feedback loop | ✅ implemented |
+
+### Graceful degradation
+
+Every external integration is wired behind a provider interface with a working
+fallback, so the app runs with **zero external services** (the default
+`DATA_SOURCE=mock`) while the real paths exist:
+
+| Capability | Real path | Fallback when unconfigured |
+|------------|-----------|----------------------------|
+| Data layer | Prisma + Postgres (`DATA_SOURCE=database`) | in-memory mock repository |
+| Transcription | Deepgram (`TRANSCRIPTION_API_KEY`) | deterministic mock transcriber |
+| AI producer | Claude `claude-opus-4-8` (`ANTHROPIC_API_KEY`) | deterministic mock producer |
+| Storage | S3 (planned) | local `./uploads`, `./renders` |
+| Rendering | system `ffmpeg` | writes the edit-plan JSON |
+| Posting | YouTube Data API (`YOUTUBE_ACCESS_TOKEN`) | mock provider returns a URL |
+| Analytics | platform APIs | deterministic modeled metrics |
+
+### End-to-end pipeline (database mode)
+
+```bash
+DATA_SOURCE=database
+npm run prisma:migrate      # create schema
+npm run prisma:seed         # load mock data
+npm run pipeline -- <srcId> '{"feedUrl":"https://…"}'   # ingest→transcribe→detect
+npm run generate -- TOP_7_PLAYS                          # AI producer builds a package
+npm run render  -- <packageId>                           # FFmpeg draft (9:16)
+npm run post    -- <packageId>                           # post to scheduled platforms
+npm run analytics                                        # import metrics → feedback loop
+```
 
 ## Recommended choices for later phases
 

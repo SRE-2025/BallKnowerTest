@@ -12,26 +12,26 @@ human team for review, filming, and final approval before anything is posted.
 
 ---
 
-## 🚦 Current status — Phase 1 (Foundation & Mock Producer Dashboard)
+## 🚦 Current status — all 8 phases implemented
 
-Phase 1 is a **fully clickable MVP running on mock data**. It proves the daily
-workflow before we connect any real integrations. There is **no database, no
-Claude API, no ingestion, no rendering, and no posting** yet — those arrive in
-later phases (see [`docs/PHASE2_PLAN.md`](docs/PHASE2_PLAN.md)).
+The app **runs with zero external services** by default (`DATA_SOURCE=mock`):
+the UI is a fully clickable producer dashboard on mock data. Every real
+integration (Postgres, Claude, transcription, FFmpeg, posting, analytics) is
+wired behind a provider interface with a **working fallback**, so the whole
+pipeline runs with or without credentials. Flip `DATA_SOURCE=database` and add
+keys to light up the real paths — see
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-What works today:
-
-| Area | Phase 1 behavior |
-|------|------------------|
-| Daily Dashboard | Stats + today's AI-generated packages + activity log |
-| Source Library | Mock sources with type, show, import method, active status |
-| Source Settings | Per-source platforms, max clip length, attribution, watermark notes |
-| Videos | Imported source videos with transcript + status |
-| Candidate Clips | Auto-detected moments with category + "why detected" |
-| Show Builder | Review clips, approve/reject, **reorder**, edit AI copy inline |
-| Filming Prompts | Exact film list per package (hook, intro, reactions, outro) |
-| Approvals | Control gates + posting targets; approve-for-posting is role-gated |
-| Roles | Mock role switcher (Admin / Editor / Approver / Viewer) — top right |
+| Phase | What it adds | Default fallback |
+|-------|--------------|------------------|
+| 1 Dashboard | Sources, videos, clips, show builder, filming, approvals, roles | mock data |
+| 2 Ingestion | RSS/manual connectors → transcription → candidate-clip detection | mock transcriber |
+| 3 AI producer | Claude (`claude-opus-4-8`) ranks clips + writes all copy as structured JSON | deterministic producer |
+| 4 Filming uploads | Per-slot commentary upload → storage → DB | local disk |
+| 5 Rendering | FFmpeg 9:16 draft from an edit plan | writes edit-plan JSON |
+| 6 Approval | Approval records, status gates, change requests | — |
+| 7 Posting | YouTube Shorts provider + scheduling/retries | mock provider |
+| 8 Analytics | Per-post metrics + performance dashboards feeding producer hints | modeled metrics |
 
 ---
 
@@ -81,6 +81,13 @@ Open <http://localhost:3000>.
 | `npm run lint` | Next.js lint |
 | `npm run prisma:format` | Format the Prisma schema |
 | `npm run prisma:generate` | Generate the Prisma client (no DB needed) |
+| `npm run prisma:migrate` | Create/apply DB schema (database mode) |
+| `npm run prisma:seed` | Load mock data into Postgres |
+| `npm run pipeline -- <srcId> '{json}'` | Ingest → transcribe → detect for a source |
+| `npm run generate -- TOP_7_PLAYS` | Run the AI producer to build a package |
+| `npm run render -- <packageId>` | Render a 9:16 draft |
+| `npm run post -- <packageId>` | Post an approved package |
+| `npm run analytics` | Import per-post analytics |
 
 ---
 

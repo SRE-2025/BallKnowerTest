@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRepository } from "@/lib/repository";
 import { ShowBuilder, type BuilderClip } from "./show-builder";
+import { PipelineActions } from "@/components/pipeline-actions";
 
 export default async function PackageDetailPage({ params }: { params: { id: string } }) {
   const repo = getRepository();
@@ -48,6 +49,9 @@ export default async function PackageDetailPage({ params }: { params: { id: stri
         render={pkg.render}
         posting={pkg.posting}
       />
+      <div className="mt-6 max-w-md">
+        <PipelineActions packageId={pkg.id} />
+      </div>
     </div>
   );
 }
