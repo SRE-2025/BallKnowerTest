@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
 import { PageHeader } from "@/components/page-header";
 import { useRole } from "@/lib/role-context";
-import { formatTimeRange, titleize, youTubeEmbed } from "@/lib/utils";
+import { VideoPlayer } from "@/components/video-player";
+import { formatTimeRange, titleize } from "@/lib/utils";
 import type {
   ShowPackageClip,
   FilmingPrompt,
@@ -336,57 +337,21 @@ function ClipCard({
   );
 }
 
-// Real in-app preview: embeds the source video (trimmed to the clip start) when
-// a YouTube id is present, falls back to a thumbnail link, then a placeholder.
+// Real in-app preview: thumbnail-first player (tap to play), trimmed to the
+// clip start. Falls back to a thumbnail link when no embeddable id is present.
 function ClipPreview({ clip }: { clip: BuilderClip }) {
-  if (clip.youTubeId) {
-    return (
-      <div className="w-full overflow-hidden rounded-md border border-border">
-        <div className="relative aspect-video w-full bg-black">
-          <iframe
-            className="absolute inset-0 h-full w-full"
-            src={youTubeEmbed(clip.youTubeId, clip.startSec)}
-            title={clip.videoTitle}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        </div>
-        <a
-          href={clip.watchUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="block bg-secondary/60 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
-        >
-          Open source ↗ · plays from {formatTimeRange(clip.startSec, clip.endSec)}
-        </a>
-      </div>
-    );
-  }
-  if (clip.thumbnailUrl || clip.watchUrl) {
-    return (
-      <a
-        href={clip.watchUrl}
-        target="_blank"
-        rel="noreferrer"
-        className="block w-full overflow-hidden rounded-md border border-border"
-      >
-        {clip.thumbnailUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={clip.thumbnailUrl} alt={clip.videoTitle} className="aspect-video w-full object-cover" />
-        ) : (
-          <div className="flex aspect-video w-full items-center justify-center bg-secondary text-xs text-muted-foreground">
-            Watch source ↗
-          </div>
-        )}
-        <span className="block bg-secondary/60 px-2 py-1 text-[11px] text-muted-foreground">
-          Source video (no in-app embed) ↗
-        </span>
-      </a>
-    );
-  }
   return (
-    <div className="flex aspect-video w-full items-center justify-center rounded-md border border-dashed border-border text-xs text-muted-foreground">
-      No preview available
+    <div className="w-full space-y-1">
+      <VideoPlayer
+        youTubeId={clip.youTubeId}
+        thumbnailUrl={clip.thumbnailUrl}
+        watchUrl={clip.watchUrl}
+        title={clip.videoTitle}
+        startSec={clip.startSec}
+      />
+      <p className="text-[11px] text-muted-foreground">
+        Plays {formatTimeRange(clip.startSec, clip.endSec)}
+      </p>
     </div>
   );
 }
