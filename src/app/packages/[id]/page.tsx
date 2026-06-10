@@ -4,6 +4,9 @@ import { getRepository } from "@/lib/repository";
 import { ShowBuilder, type BuilderClip } from "./show-builder";
 import { PipelineActions } from "@/components/pipeline-actions";
 import { CommentaryStudio } from "@/components/commentary-studio";
+import { SendToTalent } from "@/components/send-to-talent";
+import { slotByFormat } from "@/lib/schedule";
+import { RECIPIENTS } from "@/lib/recipients";
 
 export default async function PackageDetailPage({ params }: { params: { id: string } }) {
   const repo = getRepository();
@@ -57,7 +60,11 @@ export default async function PackageDetailPage({ params }: { params: { id: stri
         <div className="lg:col-span-2">
           <CommentaryStudio packageId={pkg.id} prompts={pkg.filmingPrompts} />
         </div>
-        <div>
+        <div className="space-y-6">
+          <SendToTalent
+            packageId={pkg.id}
+            talentName={(slotByFormat(pkg.format)?.talentKey === "collin" ? RECIPIENTS.collin : RECIPIENTS.marcus).name}
+          />
           <PipelineActions packageId={pkg.id} />
         </div>
       </div>

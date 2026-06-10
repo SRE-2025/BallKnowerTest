@@ -80,8 +80,12 @@ enum ClipCategory {
 enum PackageFormat {
   TOP_7_PLAYS
   BEST_TAKES
+  BEST_BETS
+  WILD_TAKES
+  PREGAME_HYPE
   DAILY_RUNDOWN
   BREAKING_NEWS
+  VIRAL_SOCIAL
   CUSTOM
 }
 
@@ -93,6 +97,8 @@ enum PackageStatus {
   READY_FOR_RENDER
   DRAFT_RENDERED
   APPROVED_FOR_POSTING
+  READY_FOR_TALENT
+  SENT_TO_TALENT
   POSTED
 }
 
@@ -474,4 +480,21 @@ model Setting {
   key       String   @unique
   value     Json
   updatedAt DateTime @updatedAt
+}
+
+// Best Bets workflow: user-submitted picks; the system finds best odds and the
+// AI writes the script for the 12pm CT show.
+model Bet {
+  id          String   @id @default(cuid())
+  showDate    DateTime
+  matchup     String
+  pick        String
+  market      String   // e.g. "moneyline", "spread", "total", "prop"
+  line        String?  // e.g. "-3.5", "o7.5"
+  bestBook    String?
+  bestOdds    String?  // American odds, e.g. "+120"
+  rationale   String?
+  createdAt   DateTime @default(now())
+
+  @@index([showDate])
 }

@@ -40,14 +40,14 @@ export const mockSources: Source[] = [
   },
   {
     id: "src_court_vision",
-    providerName: "Creator Highlights",
-    showName: "Influencers & Trick Shots",
+    providerName: "Viral Social",
+    showName: "Viral Sports Moments",
     type: "YOUTUBE_CHANNEL",
-    sportLeague: "Entertainment / Trick Shots",
+    sportLeague: "Cross-platform (TikTok / IG / YouTube / X)",
     importMethod: "YOUTUBE",
     active: true,
     notes:
-      "Creator + entertainer channel: Savannah Bananas, Dude Perfect, trick-shot artists. Ranked after real-athlete plays but eligible for the Top 7.",
+      "Whatever blew up on social that day — a viral clip from TikTok, Instagram, YouTube or X. NOT a trick-shot show; trick shots are just one example. Real-athlete plays rank first, but a moment that blows up online is eligible for the Top 7.",
     settings: {
       allowedPlatforms: ["YOUTUBE_SHORTS", "INSTAGRAM_REELS", "TIKTOK"],
       maxClipSeconds: 30,

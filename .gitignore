@@ -47,6 +47,8 @@ next-env.d.ts
 # local uploads + renders (Phase 4/5) — served from public/ in dev
 /public/uploads
 /public/renders
+/public/media
+/public/outbox
 
 # editor
 .idea/

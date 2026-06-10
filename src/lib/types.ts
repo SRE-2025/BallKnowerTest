@@ -55,8 +55,12 @@ export type ClipCategory =
 export type PackageFormat =
   | "TOP_7_PLAYS"
   | "BEST_TAKES"
+  | "BEST_BETS"
+  | "WILD_TAKES"
+  | "PREGAME_HYPE"
   | "DAILY_RUNDOWN"
   | "BREAKING_NEWS"
+  | "VIRAL_SOCIAL"
   | "CUSTOM";
 
 export type PackageStatus =
@@ -67,6 +71,8 @@ export type PackageStatus =
   | "READY_FOR_RENDER"
   | "DRAFT_RENDERED"
   | "APPROVED_FOR_POSTING"
+  | "READY_FOR_TALENT"
+  | "SENT_TO_TALENT"
   | "POSTED";
 
 export type ClipApprovalStatus = "PENDING" | "APPROVED" | "REJECTED" | "REPLACED";

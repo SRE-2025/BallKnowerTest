@@ -6,16 +6,24 @@ import type { PackageFormat } from "@/lib/types";
 const FORMAT_MAX: Record<PackageFormat, number> = {
   TOP_7_PLAYS: 7,
   BEST_TAKES: 3,
+  BEST_BETS: 5,
+  WILD_TAKES: 3,
+  PREGAME_HYPE: 5,
   DAILY_RUNDOWN: 8,
   BREAKING_NEWS: 2,
+  VIRAL_SOCIAL: 4,
   CUSTOM: 10,
 };
 
 const FORMAT_TITLE: Record<PackageFormat, string> = {
   TOP_7_PLAYS: "Top 7 Plays of the Day",
   BEST_TAKES: "Best Takes of the Day",
+  BEST_BETS: "Best Bets of the Day",
+  WILD_TAKES: "Wild Takes of the Day",
+  PREGAME_HYPE: "Pregame Hype",
   DAILY_RUNDOWN: "Daily Sports Rundown",
   BREAKING_NEWS: "Breaking News Reaction",
+  VIRAL_SOCIAL: "Viral Moment of the Day",
   CUSTOM: "Custom Package",
 };
 

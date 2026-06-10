@@ -174,11 +174,11 @@ export const mockPackages: ShowPackage[] = [
   },
   {
     id: "pkg_viral",
-    title: "Viral & Trick Shots",
-    format: "CUSTOM",
+    title: "Viral Moment of the Day",
+    format: "VIRAL_SOCIAL",
     status: "AI_GENERATED",
     showDate: SHOW_DATE,
-    summary: "The best of the entertainers: Savannah Bananas trick plays and a Dude Perfect world-championship shot.",
+    summary: "Whatever blew up on social today — eligible to crack the Top 7. Today: a Savannah Bananas moment and a Dude Perfect shot.",
     render: { status: "QUEUED", version: 0 },
     posting: [
       { platform: "TIKTOK", status: "SCHEDULED" },

@@ -26,6 +26,8 @@ const variantByStatus: Record<string, "default" | "success" | "warning" | "dange
   READY_FOR_RENDER: "info",
   DRAFT_RENDERED: "info",
   APPROVED_FOR_POSTING: "success",
+  READY_FOR_TALENT: "info",
+  SENT_TO_TALENT: "success",
   POSTED: "success",
   // Clip approval
   PENDING: "warning",

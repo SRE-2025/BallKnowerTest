@@ -6,9 +6,13 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/", label: "Daily Dashboard", group: "Produce" },
+  { href: "/schedule", label: "Run-of-Show", group: "Produce" },
   { href: "/packages", label: "Show Packages", group: "Produce" },
-  { href: "/filming", label: "Filming Prompts", group: "Produce" },
   { href: "/approvals", label: "Approvals", group: "Produce" },
+  { href: "/bets", label: "Best Bets (12p)", group: "Shows" },
+  { href: "/takes", label: "Wild Takes (6p)", group: "Shows" },
+  { href: "/storylines", label: "Storylines (6:45p)", group: "Shows" },
+  { href: "/filming", label: "Filming Prompts", group: "Shows" },
   { href: "/sources", label: "Source Library", group: "Library" },
   { href: "/videos", label: "Videos", group: "Library" },
   { href: "/clips", label: "Candidate Clips", group: "Library" },
